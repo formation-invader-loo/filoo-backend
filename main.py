@@ -38,6 +38,11 @@ def collection_list():
     return response
 
 
+@app.route('/collections', methods=['GET'])
+def collectioins_new():
+    return 'jop', 200
+
+
 @app.route('/collections/documents', methods=['GET'])
 def collection_document_list():
     """Get a list of all documents in a collection.
