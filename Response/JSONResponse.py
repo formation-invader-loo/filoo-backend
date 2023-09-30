@@ -13,7 +13,7 @@ class JSONColectionResponse:
         self.count = len(collection)
         self.offset = offset if offset >= 0 else 0 # set to default if not greater 0
         self.limit = limit if limit > 0 else 20 # set to default if negative
-        self.url = f'http://{get_config("server", "IPv4")}:{get_config("server", "port")}{route}'
+        self.url = f'http://{get_config("server", "host")}:{get_config("server", "port")}{route}'
         self.collection = collection
         self.prev_offset = (offset - limit) if (offset - limit) > 0 else None
         self.next_offset = (offset + limit) if (offset + limit) <= self.count else None

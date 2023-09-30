@@ -4,12 +4,13 @@ import os
 config = configparser.ConfigParser()
 
 config.add_section('paths')
+config.set('paths', 'uploads', os.path.abspath(os.path.join(os.path.dirname(__file__), '../uploads')))
 config.set('paths', 'data', os.path.abspath(os.path.join(os.path.dirname(__file__), '../data')))
 config.set('paths', 'html', os.path.abspath(os.path.join(os.path.dirname(__file__), '../html')))
 
 config.add_section('server')
-config.set('server', 'IPv4', 'to be defined xD') # TODO wenn containerized the correct adress has to be set here.
-config.set('server', 'port', 'to be defined xD') # TODO wenn containerized the correct port has to be set here.
+config.set('server', 'host', '0.0.0.0') # TODO wenn containerized the correct adress has to be set here.
+config.set('server', 'port', '5555') # TODO wenn containerized the correct port has to be set here.
 
 with open(os.path.join(os.path.dirname(__file__), '../config.ini'), 'w') as config_file:
   config.write(config_file)

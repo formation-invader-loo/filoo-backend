@@ -4,6 +4,7 @@ from utils.Logger import logger
 
 import markdown
 import os
+import hashlib
 
 md_converter = markdown.Markdown(extensions=['meta'])
 
@@ -15,10 +16,18 @@ class Document:
     self.name = os.path.basename(document_path)
     self.qualified_name = qualified_name
     self.document_path = document_path
+    self.doc_hash = self.create_doc_hash()
+    self.doc_mod_time = os.path.getmtime(self.document_path)
     self.html_dir = html_dir
     self.doc_meta = self.loadMetaData()
     self.resources_path = self.doc_meta['resources'] if 'resources' in self.doc_meta.keys() else None # is this needed??
     self.html_file = self.load_http_from_md()
+
+  
+  def create_doc_hash(self):
+    with open(self.document_path, 'r') as doc:
+      h = hashlib.sha1(doc.read().encode('utf-8'))
+      return h.hexdigest()   
 
   
   def load_http_from_md(self) -> str:
@@ -62,6 +71,7 @@ class Document:
       return f''' Document({self.name})
         qualified_name = {self.qualified_name}
         document_path = {self.document_path}
+        self.doc_hash = {self.doc_hash}
         html_dir = {self.html_dir}
         doc_meta = {self.doc_meta}
         resources_path = {self.resources_path}

@@ -6,10 +6,10 @@ sys.path.append('/workspaces/IOL/IOLBackendv2/Col')
 from utils.Logger import logger
 from utils.configuration import get_config
 
-from CollectionException import CollectionAlreadyExists
-from Collections import Collections
-from Collection import Collection
-from Document import Document
+from Col.CollectionException import CollectionAlreadyExists
+from Col.Collections import Collections
+from Col.Collection import Collection
+from Col.Document import Document
 import os
 
 
@@ -47,6 +47,18 @@ class CollectionsService:
     self.collections.add_collection(collection_name)
 
 
+  def delete_document(self, collection_name: str, document_name: str):
+    self.collections.delete_document(collection_name, document_name)
+
+
+  def get_document(self, collection_name:str, document_qualified_name: str) -> Document:
+    return self.collections.get_document(collection_name, document_qualified_name)
+  
+
+  def get_collection(self, collection_name:str) -> Collection:
+    return self.collections.get_collection(collection_name)
+
+
   def collections_names(self) -> list[str]:
     return self.collections.collections_list()
   
@@ -59,8 +71,8 @@ class CollectionsService:
     return self.collections.get_document(collection_name, document_qualified_name).html_file
 
 
-  def new_document(self, collection_name: str, document_qualified_name: str, document_content: str):
-    self.collections.new_document(collection_name, document_qualified_name, document_content)
+  def new_document(self, collection_name: str, document_qualified_name: str):
+    self.collections.new_document(collection_name, document_qualified_name)
 
 
 def main():

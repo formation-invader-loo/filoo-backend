@@ -4,6 +4,6 @@ echo "start setup"
 
 pip install -r ./requirements.txt
 
-python ./setup.py
+python3 ./setup.py
 
 echo "setup complete"

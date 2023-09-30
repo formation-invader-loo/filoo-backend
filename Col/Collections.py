@@ -2,9 +2,9 @@ import sys
 sys.path.append('/workspaces/IOL/IOLBackendv2')
 from utils.Logger import logger
 
-from Collection import Collection
-from Document import Document
-from CollectionException import CollectionDoesNotExist
+from Col.Collection import Collection
+from Col.Document import Document
+from Col.CollectionException import CollectionDoesNotExist
 
 class Collections:
   """Collections holds multiple Collection instances.
@@ -13,6 +13,16 @@ class Collections:
     self.collections = {}
 
   
+  def get_collection(self, collection_name: str) -> Collection:
+    collection: Collection = {}
+    try:
+      collection = self.collections.get(collection_name)
+    except KeyError as e:
+      raise CollectionDoesNotExist(f'Collection not found!\n{e}')
+    
+    return collection
+
+
   def get_document(self, collection_name: str, document_qualified_name) -> Document:
     collection: Collection = {}
     try:
@@ -20,27 +30,38 @@ class Collections:
     except KeyError as e:
       raise CollectionDoesNotExist(f'Collection not found!\n{e}')
     
-    collection.get_document(document_qualified_name)
-
-
-  def add_collection(self, collection_name: str) -> None:
-      self.collections.update({collection_name: Collection(collection_name)})
+    return collection.get_document(document_qualified_name)
 
   
-  def new_document(self, collection_name: str, document_qualified_name: str, document_content: str):
+  def delete_document(self, collection_name: str, document_qualified_name) -> Document:
     collection: Collection = {}
     try:
       collection = self.collections.get(collection_name)
     except KeyError as e:
       raise CollectionDoesNotExist(f'Collection not found!\n{e}')
     
-    collection.add_document(document_qualified_name, document_content)
+    collection.delete_document(document_qualified_name)
+    logger.warning(f'{document_qualified_name} removed from {collection.name}.')
 
 
-  def collections_list(self) -> list[str]:
+  def add_collection(self, collection_name: str) -> None:
+      self.collections.update({collection_name: Collection(collection_name)})
+
+  
+  def new_document(self, collection_name: str, document_qualified_name: str):
+    collection: Collection = {}
+    try:
+      collection = self.collections.get(collection_name)
+    except KeyError as e:
+      raise CollectionDoesNotExist(f'Collection not found!\n{e}')
+    
+    collection.add_document(document_qualified_name)
+
+
+  def collections_list(self) -> list[list[str, str]]:
     """
     Returns:
-        list[str]: List of all collection names
+        list[dict[str, str]]: List of all collection names and uuid
     """
     collection_list: list[Collection] = self.collections.values()
     return [c.name for c in collection_list]

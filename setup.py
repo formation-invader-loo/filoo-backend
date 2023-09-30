@@ -12,6 +12,14 @@ def setup_data_dir() -> None:
     data_path = get_config('paths', 'data')
     if not os.path.isdir(data_path):
         os.makedirs(data_path)
+
+    html_path = get_config('paths', 'html')
+    if not os.path.isdir(html_path):
+        os.makedirs(html_path)
+
+    uploads_path = get_config('paths', 'uploads')
+    if not os.path.isdir(uploads_path):
+        os.makedirs(uploads_path)
     
     if not os.path.isdir(os.path.join(os.path.dirname(__file__), data_path + '/library')):
         os.makedirs(data_path + '/library')
