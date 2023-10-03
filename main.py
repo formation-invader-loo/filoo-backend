@@ -75,46 +75,14 @@ def post_collectioins(request: Request):
   return 'jop', 201
 
 
-@app.route('/collections/documents', methods=['GET', 'POST', 'DELETE'])
+@app.route('/collections/documents', methods=['GET'])
 def collections_documents():
   try:
     if request.method == 'GET':
       return get_collections_documents(request)
-    if request.method == 'POST':
-      return post_collections_documents(request)
-    if request.method == 'DELETE':
-      return delete_collections_documents(request)
   except HttpException as e:
     logger.error(e)
     return e.args[0], e.args[1]
-    
-def delete_collections_documents(request: Request):
-  """Delete a Document from a Collection
-
-  Args:
-      request (Request): the request that was sent to delete a document
-  """
-  if request.args.get('collection'):
-    collection = request.args.get('collection')
-  else:
-    return 'Collection must be specified', 400
-  if collection not in collection_service.collections_names():
-    return 'Collection does not exist', 400
-  
-  if request.args.get('md_file'):
-    md_file = request.args.get('md_file')
-  else:
-    return 'File must be specified', 400
-  if md_file not in collection_service.documents_names_of(collection):
-    return 'File does not exist', 400
-  
-  try:
-    logger.debug(f'{delete_collections_documents.__qualname__} request with: collection={collection}, md_file={md_file}')
-    collection_service.delete_document(collection, md_file)
-    return f'{md_file} from {collection} deleted.', 201
-  except DocumentDoesNotExist as e:
-    logger.error(e)
-    return f'{md_file} does not exist in {collection}.', 410
   
 
 def get_collections_documents(request: Request):
@@ -150,17 +118,29 @@ def get_collections_documents(request: Request):
   return response
 
 
-@app.route('/collections/documents/<path:filename>', methods=['GET'])
-def get_collections_documents_path(filename):
+@app.route('/collections/documents/<path:filename>', methods=['GET', 'POST', 'DELETE'])
+def collections_documents_path(filename):
+  try: 
+    if request.method == 'GET':
+      get_collections_documents_path(request, filename)
+    if request.method == 'POST':
+      post_collections_documents_path(request, filename)
+    if request.method == 'DELETE':
+      post_collections_documents_path(request, filename)
+  except HttpException as e:
+    logger.error(e)
+    return e.args[0], e.args[1]
+
+def get_collections_documents_path(request: Request, file_path: str):
   if request.args.get('collection'):
     collection = request.args.get('collection')
   else:
     return 'Collection must be specified', 400
   
-  logger.debug(f'{get_collections_documents_path.__qualname__} request with collection={collection}, filename={filename}')
+  logger.debug(f'{get_collections_documents_path.__qualname__} request with collection={collection}, filename={file_path}')
   try:
     col = collection_service.get_collection(collection)
-    doc = collection_service.get_document(collection, filename)
+    doc = collection_service.get_document(collection, file_path)
   except CollectionDoesNotExist as e:
     logger.error(e)
     return 'Collection does not exist', 400
@@ -171,13 +151,43 @@ def get_collections_documents_path(filename):
   return send_from_directory(col.data_dir, doc.qualified_name)
 
 
-def post_collections_documents(request: Request):
+def delete_collections_documents_path(request: Request, file_path: str):
+  """Delete a Document from a Collection
+
+  Args:
+      request (Request): the request that was sent to delete a document
+  """
   if request.args.get('collection'):
     collection = request.args.get('collection')
   else:
-    return 'Collection must be specified', 400
+    raise HttpException('Collection must be specified', 400)
   if collection not in collection_service.collections_names():
-    return 'Collection does not exist', 400
+    raise HttpException('Collection does not exist', 400)
+  
+  if file_path:
+    md_file = file_path
+  else:
+    raise HttpException('File must be specified', 400)
+  if md_file not in collection_service.documents_names_of(collection):
+    raise HttpException('File does not exist', 400)
+  
+  try:
+    logger.debug(f'{delete_collections_documents_path.__qualname__} request with: collection={collection}, md_file={md_file}')
+    collection_service.delete_document(collection, md_file)
+    return f'{md_file} from {collection} deleted.', 201
+  
+  except DocumentDoesNotExist as e:
+    logger.error(e)
+    raise HttpException(f'{md_file} does not exist in {collection}.', 410)
+
+
+def post_collections_documents_path(request: Request, file_path: str): # TODO: gucke ob des mit file_path un file_name so passt...
+  if request.args.get('collection'):
+    collection = request.args.get('collection')
+  else:
+    raise HttpException('Collection must be specified', 400)
+  if collection not in collection_service.collections_names():
+    raise HttpException('Collection does not exist', 400)
   
   # check if the post request has the file part
   if 'file' not in request.files:
@@ -188,18 +198,21 @@ def post_collections_documents(request: Request):
   if file and allowed_file(file.filename, ALLOWED_EXTENSIONS):
     print(file.filename)
     if not secure_filename(file.filename):
-      raise HttpException('Filename insecure', 406)
+      raise HttpException('File name insecure', 406)
+    if not secure_filename(file_path):
+      raise HttpException('File path insecure', 406)
     file_name = file.filename.rsplit('/', 1)
     file_name = file_name[1] if len(file_name) > 1 else file_name[0]
     file.save(os.path.join(app.config['UPLOAD_FOLDER'], file_name))
 
   try:
-    collection_service.new_document(collection, file.filename)
+    collection_service.new_document(collection, file_path)
   except DocumentAlreadyExists as e:
     os.remove(os.path.join(app.config['UPLOAD_FOLDER'], file_name))
     logger.error(e)
-    raise HttpException(f'Document with name "{file.filename}" alredy exists in the Collection "{collection}" .', 409)
-  return 'jop', 201
+    raise HttpException(f'Document with name "{file.filename}" alredy exists in the Collection "{collection}".', 409)
+  
+  return f'Document with name "{file.filename}" uploded into Collection "{collection}".', 201
         
 
 @app.route('/collections/documents/html', methods=['GET'])
@@ -213,17 +226,17 @@ def collections_documents_html():
   if request.args.get('collection'):
     collection = request.args.get('collection')
   else:
-    return 'Collection must be specified', 400
+    raise HttpException('Collection must be specified', 400)
   if collection not in collection_service.collections_names():
-    return 'Collection does not exist', 400
+    raise HttpException('Collection does not exist', 400)
 
 
   if request.args.get('md_file'):
     md_file = request.args.get('md_file')
   else:
-    return 'File must be specified', 400
+    raise HttpException('File must be specified', 400)
   if md_file not in collection_service.documents_names_of(collection):
-    return 'File does not exist', 400
+    raise HttpException('File does not exist', 400)
   
   logger.debug(f'{collections_documents_html.__qualname__} request with: collection={collection}, md_file={md_file}')
   html_file_name = collection_service.get_document_html(collection, md_file)

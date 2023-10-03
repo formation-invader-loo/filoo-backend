@@ -1,8 +1,9 @@
 class HttpException(Exception):
-    """Exception raised for errors in the input salary.
+    """Exception raised for errors in http responses. (code is better readable if errors raised for failure responses and 
+    return values for successful responses)
 
     Attributes:
-        salary -- input salary which caused the error
+        err_code -- html error code
         message -- explanation of the error
     """
 
