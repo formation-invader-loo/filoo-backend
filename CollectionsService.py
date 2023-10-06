@@ -6,10 +6,10 @@ sys.path.append('/workspaces/IOL/IOLBackendv2/Col')
 from utils.Logger import logger
 from utils.configuration import get_config
 
-from Col.CollectionException import CollectionAlreadyExists
-from Col.Collections import Collections
-from Col.Collection import Collection
-from Col.Document import Document
+from collection.CollectionException import CollectionAlreadyExists
+from collection.Collections import Collections
+from collection.Collection import Collection
+from collection.Document import Document
 import os
 
 
@@ -31,7 +31,7 @@ class CollectionsService:
     '''
   
 
-  def new_collection(self, collection_name: str) -> None:
+  def new_collection(self, collection_name: str) -> Collection:
     """Create a new Collection and the corresponding directories f with the given name.
 
     Args:
@@ -44,7 +44,7 @@ class CollectionsService:
     if os.path.isdir(collection_dir):
       raise CollectionAlreadyExists(f'Collection with name "{collection_name}" already exists.')
     os.makedirs(collection_dir, exist_ok=True)
-    self.collections.add_collection(collection_name)
+    return self.collections.add_collection(collection_name)
 
 
   def delete_document(self, collection_name: str, document_name: str):
